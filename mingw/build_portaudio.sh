@@ -22,25 +22,21 @@ fi
 set -e
 set -x
 
-if [ ! -f $1 ] ; then
-    mkdir $1
-fi
+mkdir -p $1
 
 cd $1
 
 if [ ! -f portaudio ] ; then
     tar xvzf ../pa_stable_v19_20140130.tgz
+    cd portaudio
+    autoreconf -if
+    cd ..
 fi
 
 cd portaudio
 
-if [ -f Makefile ] ; then
-    $MINGW-make clean
-fi
+$MINGW-make clean
 
-if [ ! -f configure ] ; then
-    autoreconf -if
-fi
 
 
 # The asio sdk can be found here: http://www.steinberg.net/en/company/developers.html
