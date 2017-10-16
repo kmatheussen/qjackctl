@@ -18,8 +18,6 @@ To use the freetype fontengine, add this line to src/src.pro:
 WindowsArguments = fontengine=freetype
 
 
-
-
 QjackCtl - JACK Audio Connection Kit Qt GUI Interface
 -----------------------------------------------------
 
@@ -85,7 +83,7 @@ Just launch ${prefix}/bin/qjackctl and you're off (hopefully).
 If you're checking out from Git, you'll have to prepare the
 configure script just before you proceed with the above instructions:
 
-   make -f Makefile.git
+   ./autogen.sh
 
 
 Configuration

@@ -1,7 +1,7 @@
 // qjackctlSystemTray.h
 //
 /****************************************************************************
-   Copyright (C) 2003-2013, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2016, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -25,6 +25,7 @@
 #include <QWidget>
 
 #include <QSystemTrayIcon>
+#include <QMenu>
 
 
 //----------------------------------------------------------------------------
@@ -60,6 +61,9 @@ signals:
 	// Clicked signal.
 	void clicked();
 
+	// Toggle Start/Stop server.
+	void doubleClicked();
+
 	// Xrun reset signal.
 	void middleClicked();
 
@@ -71,10 +75,14 @@ protected slots:
 	// Handle systeam tray activity.
 	void activated(QSystemTrayIcon::ActivationReason);
 
+	// Context menu slot.
+	void contextMenuRequested();
+
 private:
 
 	// Instance pixmap and background color.
 	QIcon   m_icon;
+	QMenu   m_menu;
 	QPixmap m_pixmap;
 	QPixmap m_pixmapOverlay;
 	QColor  m_background;

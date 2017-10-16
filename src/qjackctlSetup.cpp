@@ -1,7 +1,7 @@
 // qjackctlSetup.cpp
 //
 /****************************************************************************
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -30,6 +30,9 @@
 #include <QTextStream>
 #include <QFileInfo>
 
+#ifdef CONFIG_JACK_VERSION
+#include <jack/jack.h>
+#endif
 
 #if defined(WIN32)
 #define DEFAULT_DRIVER "portaudio"
@@ -114,6 +117,7 @@ void qjackctlSetup::loadSetup (void)
 	iConnectionsIconSize     = m_settings.value("/ConnectionsIconSize", QJACKCTL_ICON_16X16).toInt();
 	sConnectionsFont         = m_settings.value("/ConnectionsFont").toString();
 	bQueryClose              = m_settings.value("/QueryClose", true).toBool();
+	bQueryShutdown           = m_settings.value("/QueryShutdown", true).toBool();
 	bKeepOnTop               = m_settings.value("/KeepOnTop", false).toBool();
 	bSystemTray              = m_settings.value("/SystemTray", false).toBool();
 	bSystemTrayQueryClose    = m_settings.value("/SystemTrayQueryClose", true).toBool();
@@ -121,9 +125,9 @@ void qjackctlSetup::loadSetup (void)
 	bServerConfig            = m_settings.value("/ServerConfig", true).toBool();
 	sServerConfigName        = m_settings.value("/ServerConfigName", ".jackdrc").toString();
 	bServerConfigTemp        = m_settings.value("/ServerConfigTemp", false).toBool();
-	bQueryShutdown           = m_settings.value("/QueryShutdown", true).toBool();
 	bAlsaSeqEnabled          = m_settings.value("/AlsaSeqEnabled", true).toBool();
 	bDBusEnabled             = m_settings.value("/DBusEnabled", false).toBool();
+	bJackDBusEnabled         = m_settings.value("/JackDBusEnabled", false).toBool();
 	bAliasesEnabled          = m_settings.value("/AliasesEnabled", false).toBool();
 	bAliasesEditing          = m_settings.value("/AliasesEditing", false).toBool();
 	bLeftButtons             = m_settings.value("/LeftButtons", true).toBool();
@@ -173,7 +177,7 @@ void qjackctlSetup::saveSetup (void)
 {
 	// Save all settings and options...
 	m_settings.beginGroup("/Program");
-	m_settings.setValue("/Version", QJACKCTL_VERSION);
+	m_settings.setValue("/Version", CONFIG_BUILD_VERSION);
 	m_settings.endGroup();
 
 	m_settings.beginGroup("/Presets");
@@ -226,6 +230,7 @@ void qjackctlSetup::saveSetup (void)
 	m_settings.setValue("/ConnectionsIconSize",     iConnectionsIconSize);
 	m_settings.setValue("/ConnectionsFont",         sConnectionsFont);
 	m_settings.setValue("/QueryClose",              bQueryClose);
+	m_settings.setValue("/QueryShutdown",           bQueryShutdown);
 	m_settings.setValue("/KeepOnTop",               bKeepOnTop);
 	m_settings.setValue("/SystemTray",              bSystemTray);
 	m_settings.setValue("/SystemTrayQueryClose",    bSystemTrayQueryClose);
@@ -233,9 +238,9 @@ void qjackctlSetup::saveSetup (void)
 	m_settings.setValue("/ServerConfig",            bServerConfig);
 	m_settings.setValue("/ServerConfigName",        sServerConfigName);
 	m_settings.setValue("/ServerConfigTemp",        bServerConfigTemp);
-	m_settings.setValue("/QueryShutdown",           bQueryShutdown);
 	m_settings.setValue("/AlsaSeqEnabled",          bAlsaSeqEnabled);
 	m_settings.setValue("/DBusEnabled",             bDBusEnabled);
+	m_settings.setValue("/JackDBusEnabled",         bJackDBusEnabled);
 	m_settings.setValue("/AliasesEnabled",          bAliasesEnabled);
 	m_settings.setValue("/AliasesEditing",          bAliasesEditing);
 	m_settings.setValue("/LeftButtons",             bLeftButtons);
@@ -360,7 +365,11 @@ bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset 
 	}
 
 	m_settings.beginGroup("/Settings" + sSuffix);
+#if defined(WIN32)
 	preset.sServerPrefix = m_settings.value("/Server", "jackd -S").toString();
+#else
+	preset.sServerPrefix = m_settings.value("/Server", "jackd").toString();
+#endif
 	preset.sServerName  = m_settings.value("/ServerName").toString();
 	preset.bRealtime    = m_settings.value("/Realtime", true).toBool();
 	preset.bSoftMode    = m_settings.value("/SoftMode", false).toBool();
@@ -565,8 +574,15 @@ bool qjackctlSetup::parse_args ( const QStringList& args )
 			return false;
 		}
 		else if (sArg == "-v" || sArg == "--version") {
-			out << QObject::tr("Qt: %1\n").arg(qVersion());
-			out << QObject::tr(QJACKCTL_TITLE ": %1\n").arg(QJACKCTL_VERSION);
+			out << QString("Qt: %1\n")
+				.arg(qVersion());
+			out << QString("%1: %2\n")
+				.arg(QJACKCTL_TITLE)
+				.arg(CONFIG_BUILD_VERSION);
+		#ifdef CONFIG_JACK_VERSION
+			out << QString("JACK: %1\n")
+				.arg(jack_get_version_string());
+		#endif
 			return false;
 		}	// FIXME: Avoid auto-start jackd stuffed args!
 		else if (sArg != "-T" && sArg != "-ndefault") {
@@ -696,13 +712,13 @@ void qjackctlSetup::loadWidgetGeometry ( QWidget *pWidget, bool bVisible )
 {
 	// Try to restore old form window positioning.
 	if (pWidget) {
+	//	if (bVisible) pWidget->show(); -- force initial exposure?
 		m_settings.beginGroup("/Geometry/" + pWidget->objectName());
 	#if QT_VERSION >= 0x050000
 		const QByteArray& geometry
 			= m_settings.value("/geometry").toByteArray();
 		if (!geometry.isEmpty())
 			pWidget->restoreGeometry(geometry);
-		else
 	#else//--LOAD_OLD_GEOMETRY
 		QPoint wpos;
 		QSize  wsize;
@@ -714,9 +730,9 @@ void qjackctlSetup::loadWidgetGeometry ( QWidget *pWidget, bool bVisible )
 			pWidget->move(wpos);
 		if (wsize.width() > 0 && wsize.height() > 0)
 			pWidget->resize(wsize);
-		else
 	#endif
-		pWidget->adjustSize();
+	//	else
+	//	pWidget->adjustSize();
 		if (!bVisible)
 			bVisible = m_settings.value("/visible", false).toBool();
 		if (bVisible && !bStartMinimized)
@@ -753,3 +769,4 @@ void qjackctlSetup::saveWidgetGeometry ( QWidget *pWidget, bool bVisible )
 
 
 // end of qjackctlSetup.cpp
+

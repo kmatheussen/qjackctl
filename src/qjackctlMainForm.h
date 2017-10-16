@@ -1,7 +1,7 @@
 // qjackctlMainForm.h
 //
 /****************************************************************************
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -29,9 +29,9 @@
 #include <QProcess>
 #include <QDateTime>
 
-#include <weak_libjack.h>
-
 #include <QSessionManager>
+
+#include <jack/jack.h>
 
 #ifdef CONFIG_ALSA_SEQ
 #include <alsa/asoundlib.h>
@@ -129,6 +129,7 @@ public slots:
 
 	void startJack();
 	void stopJack();
+	void toggleJack();
 
 	void resetXrunStats();
 
@@ -189,6 +190,8 @@ protected:
 
 	void appendStdoutBuffer(const QString&);
 	void flushStdoutBuffer();
+
+	bool stdoutBlock(int fd, bool bBlock) const;
 
 	QString formatExitStatus(int iExitStatus) const;
 

@@ -1,7 +1,7 @@
 // qjackctlMainForm.cpp
 //
 /****************************************************************************
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -53,6 +53,9 @@
 #include <QContextMenuEvent>
 #include <QCloseEvent>
 
+#if defined(WIN32)
+#include <QPlastiqueStyle>
+#endif
 
 
 #if QT_VERSION < 0x040500
@@ -313,7 +316,6 @@ qjackctlMainForm::qjackctlMainForm (
 	QWidget *pParent, Qt::WindowFlags wflags )
 	: QWidget(pParent, wflags)
 {
-        
 	// Setup UI struct...
 	m_ui.setupUi(this);
 
@@ -454,7 +456,7 @@ qjackctlMainForm::~qjackctlMainForm (void)
 	// Stop server, if not already...
 
 #ifdef CONFIG_DBUS
-	if (m_pSetup->bStopJack || !m_pSetup->bDBusEnabled)
+	if (m_pSetup->bStopJack || !m_pSetup->bJackDBusEnabled)
 		stopJackServer();
 	if (m_pDBusLogWatcher)
 		delete m_pDBusLogWatcher;
@@ -574,6 +576,13 @@ bool qjackctlMainForm::setup ( qjackctlSetup *pSetup )
 	// Try to restore old window positioning and appearence.
 	m_pSetup->loadWidgetGeometry(this, true);
 
+	// And for the whole widget gallore...
+	m_pSetup->loadWidgetGeometry(m_pMessagesStatusForm);
+	m_pSetup->loadWidgetGeometry(m_pSessionForm);
+	m_pSetup->loadWidgetGeometry(m_pConnectionsForm);
+	m_pSetup->loadWidgetGeometry(m_pPatchbayForm);
+//	m_pSetup->loadWidgetGeometry(m_pSetupForm);
+
 	// Make it final show...
 	m_ui.StatusDisplayFrame->show();
 
@@ -593,12 +602,6 @@ bool qjackctlMainForm::setup ( qjackctlSetup *pSetup )
 #ifdef CONFIG_SYSTEM_TRAY
 	updateSystemTray();
 #endif
-	// And for the whole widget gallore...
-	m_pSetup->loadWidgetGeometry(m_pMessagesStatusForm);
-	m_pSetup->loadWidgetGeometry(m_pSessionForm);
-	m_pSetup->loadWidgetGeometry(m_pConnectionsForm);
-	m_pSetup->loadWidgetGeometry(m_pPatchbayForm);
-//	m_pSetup->loadWidgetGeometry(m_pSetupForm);
 
 	// Initial XRUN statistics reset.
 	resetXrunStats();
@@ -608,8 +611,12 @@ bool qjackctlMainForm::setup ( qjackctlSetup *pSetup )
 	if (m_pSetup->bStdoutCapture && ::pipe(g_fdStdout) == 0) {
 		::dup2(g_fdStdout[QJACKCTL_FDWRITE], STDOUT_FILENO);
 		::dup2(g_fdStdout[QJACKCTL_FDWRITE], STDERR_FILENO);
-		m_pStdoutNotifier = new QSocketNotifier(g_fdStdout[QJACKCTL_FDREAD], QSocketNotifier::Read, this);
-		QObject::connect(m_pStdoutNotifier, SIGNAL(activated(int)), this, SLOT(stdoutNotifySlot(int)));
+		stdoutBlock(g_fdStdout[QJACKCTL_FDWRITE], false);
+		m_pStdoutNotifier = new QSocketNotifier(
+			g_fdStdout[QJACKCTL_FDREAD], QSocketNotifier::Read, this);
+		QObject::connect(m_pStdoutNotifier,
+			SIGNAL(activated(int)),
+			SLOT(stdoutNotifySlot(int)));
 	}
 #endif
 #ifdef CONFIG_ALSA_SEQ
@@ -710,6 +717,9 @@ bool qjackctlMainForm::setup ( qjackctlSetup *pSetup )
 				m_pSessionForm, SLOT(saveSessionSaveTemplate()));
 		#endif
 		}
+	}
+	// Register JACK D-Bus service...
+	if (m_pSetup->bJackDBusEnabled) {
 		// Detect whether jackdbus is avaliable...
 		QDBusConnection dbusc = QDBusConnection::sessionBus();
 		m_pDBusControl = new QDBusInterface(
@@ -919,7 +929,7 @@ bool qjackctlMainForm::queryClose (void)
 		m_pSetup->saveWidgetGeometry(m_pConnectionsForm);
 		m_pSetup->saveWidgetGeometry(m_pPatchbayForm);
 	//	m_pSetup->saveWidgetGeometry(m_pSetupForm);
-		m_pSetup->saveWidgetGeometry(this);
+		m_pSetup->saveWidgetGeometry(this, true);
 		// Close popup widgets.
 		if (m_pMessagesStatusForm)
 			m_pMessagesStatusForm->close();
@@ -1126,8 +1136,8 @@ void qjackctlMainForm::startJack (void)
 	if (fi.isRelative()) {
 	#if defined(WIN32)
 		const char chPathSep = ';';
-                if (fi.suffix().isEmpty())
-                  sCommand += ".exe";
+		if (fi.suffix().isEmpty())
+			sCommand += ".exe";
 	#else
 		const char chPathSep = ':';
 	#endif
@@ -1140,12 +1150,16 @@ void qjackctlMainForm::startJack (void)
 		while (iter.hasNext()) {
 			const QString& sDirectory = iter.next();
 			fi.setFile(QDir(sDirectory), sCommand);
-                        printf("\n\n\n\n abs_path: -%s-\ndir: -%s-\nsCommand: -%s-\nexists: %d, executable: %d\n\n",
-                               fi.absolutePath().toUtf8().constData(),
-                               sDirectory.toUtf8().constData(),
-                               sCommand.toUtf8().constData(),
-                               fi.exists(), fi.isExecutable()
-                               );
+		#if defined(WIN32)
+		#ifdef CONFIG_DEBUG
+			printf("\n\n\n\n abs_path: -%s-\ndir: -%s-\nsCommand: -%s-\nexists: %d, executable: %d\n\n",
+				   fi.absolutePath().toUtf8().constData(),
+				   sDirectory.toUtf8().constData(),
+				   sCommand.toUtf8().constData(),
+				   fi.exists(), fi.isExecutable()
+			);
+		#endif
+		#endif
 			if (fi.exists() && fi.isExecutable()) {
 				sCommand = fi.filePath();
 				break;
@@ -1504,6 +1518,15 @@ void qjackctlMainForm::stopJackServer (void)
 }
 
 
+void qjackctlMainForm::toggleJack (void)
+{
+	if (m_pJackClient)
+		stopJack();
+	else
+		startJack();
+}
+
+
 // Stdout handler...
 void qjackctlMainForm::readStdout (void)
 {
@@ -1551,7 +1574,7 @@ void qjackctlMainForm::jackStarted (void)
 	// Show startup results...
 	if (m_pJack) {
 		appendMessages(tr("JACK was started with PID=%1.")
-			.arg(uint64_t(m_pJack->pid())));
+			.arg(quint64(m_pJack->pid())));
 	}
 
 #ifdef CONFIG_DBUS
@@ -1705,15 +1728,28 @@ void qjackctlMainForm::updateXrunStats ( float fXrunLast )
 }
 
 
+// Set stdout/stderr blocking mode.
+bool qjackctlMainForm::stdoutBlock ( int fd, bool bBlock ) const
+{
+#if !defined(WIN32)
+	const int iFlags = ::fcntl(fd, F_GETFL, 0);
+	const bool bNonBlock = bool(iFlags & O_NONBLOCK);
+	if (bBlock && bNonBlock)
+		bBlock = (::fcntl(fd, F_SETFL, iFlags & ~O_NONBLOCK) == 0);
+	else
+	if (!bBlock && !bNonBlock)
+		bBlock = (::fcntl(fd, F_SETFL, iFlags |  O_NONBLOCK) != 0);
+#endif
+	return bBlock;
+}
+
+
 // Own stdout/stderr socket notifier slot.
 void qjackctlMainForm::stdoutNotifySlot ( int fd )
 {
  #if !defined(WIN32)
 	// Set non-blocking reads, if not already...
-	const int iFlags = ::fcntl(fd, F_GETFL, 0);
-	int iBlock = ((iFlags & O_NONBLOCK) == 0);
-	if (iBlock)
-		iBlock = ::fcntl(fd, F_SETFL, iFlags | O_NONBLOCK);
+	const bool bBlock = stdoutBlock(fd, false);
 	// Read as much as is available...
 	QString sTemp;
 	char achBuffer[1024];
@@ -1722,7 +1758,7 @@ void qjackctlMainForm::stdoutNotifySlot ( int fd )
 	while (cchRead > 0) {
 		achBuffer[cchRead] = (char) 0;
 		sTemp.append(achBuffer);
-		cchRead = (iBlock ? 0 : ::read(fd, achBuffer, cchBuffer));
+		cchRead = (bBlock ? 0 : ::read(fd, achBuffer, cchBuffer));
 	}
 	// Needs to be non-empty...
 	if (!sTemp.isEmpty())
@@ -2211,6 +2247,7 @@ void qjackctlMainForm::updateXrunCount (void)
 	updateStatusItem(STATUS_XRUN_COUNT, sText);
 }
 
+
 // Convert whole elapsed seconds to hh:mm:ss time format.
 QString qjackctlMainForm::formatTime ( float secs ) const
 {
@@ -2310,7 +2347,7 @@ void qjackctlMainForm::refreshXrunStats (void)
 	updateXrunCount();
 
 	if (m_fXrunTotal < 0.001f) {
-		QString n = "--";
+		const QString n = "--";
 		updateStatusItem(STATUS_XRUN_TOTAL, n);
 		updateStatusItem(STATUS_XRUN_MIN, n);
 		updateStatusItem(STATUS_XRUN_MAX, n);
@@ -2320,7 +2357,7 @@ void qjackctlMainForm::refreshXrunStats (void)
 		float fXrunAverage = 0.0f;
 		if (m_iXrunCount > 0)
 			fXrunAverage = (m_fXrunTotal / m_iXrunCount);
-		QString s = " " + tr("msec");
+		const QString s = " " + tr("msec");
 		updateStatusItem(STATUS_XRUN_TOTAL, QString::number(m_fXrunTotal) + s);
 		updateStatusItem(STATUS_XRUN_MIN, QString::number(m_fXrunMin) + s);
 		updateStatusItem(STATUS_XRUN_MAX, QString::number(m_fXrunMax) + s);
@@ -3197,7 +3234,8 @@ void qjackctlMainForm::refreshStatus (void)
 		QString sText = n;
 		jack_position_t tpos;
 		jack_transport_state_t tstate = jack_transport_query(m_pJackClient, &tpos);
-		bool bPlaying = (tstate == JackTransportRolling || tstate == JackTransportLooping);
+		const bool bPlaying
+			= (tstate == JackTransportRolling || tstate == JackTransportLooping);
 		// Transport timecode position.
 	//  if (bPlaying)
 			updateStatusItem(STATUS_TRANSPORT_TIME,
@@ -3218,7 +3256,7 @@ void qjackctlMainForm::refreshStatus (void)
 		// Less frequent status items update...
 		if (m_iStatusRefresh >= QJACKCTL_STATUS_CYCLE) {
 			m_iStatusRefresh = 0;
-			float fDspLoad = jack_cpu_load(m_pJackClient);
+			const float fDspLoad = jack_cpu_load(m_pJackClient);
 			const char f = (fDspLoad > 0.1f ? 'f' : 'g'); // format
 			const int  p = (fDspLoad > 1.0f ?  1  :  2 ); // precision
 		#ifdef CONFIG_SYSTEM_TRAY
@@ -3249,7 +3287,7 @@ void qjackctlMainForm::refreshStatus (void)
 				m_ui.ServerModeTextLabel->setPalette(pal);
 			}
 		#ifdef CONFIG_JACK_REALTIME
-			bool bRealtime = jack_is_realtime(m_pJackClient);
+			const bool bRealtime = jack_is_realtime(m_pJackClient);
 			updateStatusItem(STATUS_REALTIME,
 				(bRealtime ? tr("Yes") : tr("No")));
 			m_ui.ServerModeTextLabel->setText(bRealtime ? tr("RT") : n);
@@ -3312,6 +3350,18 @@ void qjackctlMainForm::refreshStatus (void)
 				refreshXrunStats();
 			}
 		}
+	#ifdef CONFIG_SYSTEM_TRAY
+		// XRUN: blink the system-tray icon backgroung...
+		if (m_pSystemTray && m_iXrunCallbacks > 0
+			&& m_pSetup && m_pSetup->bDisplayBlink) {
+			const int iElapsed = m_tXrunLast.elapsed();
+			if (iElapsed > 0x7ff) { // T=2048ms.
+				QColor color(m_pSystemTray->background());
+				color.setAlpha(0x0ff - ((iElapsed >> 3) & 0x0ff));
+				m_pSystemTray->setBackground(color);
+			}
+		}
+	#endif
 	}   // No need to update often if we're just idle...
 	else if (m_iStatusRefresh >= QJACKCTL_STATUS_CYCLE) {
 		m_iStatusRefresh = 0;
@@ -3499,6 +3549,9 @@ void qjackctlMainForm::updateSystemTray (void)
 		QObject::connect(m_pSystemTray,
 			SIGNAL(middleClicked()),
 			SLOT(resetXrunStats()));
+		QObject::connect(m_pSystemTray,
+			SIGNAL(doubleClicked()),
+			SLOT(toggleJack()));
 		QObject::connect(m_pSystemTray,
 			SIGNAL(contextMenuRequested(const QPoint &)),
 			SLOT(contextMenu(const QPoint &)));

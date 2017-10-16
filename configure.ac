@@ -1,18 +1,66 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(QjackCtl, 0.4.0.17, rncbc@rncbc.org, qjackctl)
+AC_INIT(QjackCtl, 0.4.6, rncbc@rncbc.org, qjackctl)
 
 AC_CONFIG_SRCDIR(src/qjackctl.cpp)
 AC_CONFIG_HEADERS(src/config.h)
-AC_CONFIG_FILES(Makefile qjackctl.spec src/src.pri src/qjackctl.desktop)
+AC_CONFIG_FILES(Makefile qjackctl.spec src/src.pri)
+
+# Build version string.
+AC_CACHE_VAL([ac_cv_build_version], [
+   ac_cv_build_version=$(git describe --tags --dirty --abbrev=6 2>/dev/null)
+   if test -n "$ac_cv_build_version"; then
+      ac_cv_build_version=$(echo $ac_cv_build_version | sed 's/^[[^_]]*[[_v]]//i')
+      ac_cv_build_version=$(echo $ac_cv_build_version | sed 's/-g/git./')
+      ac_cv_build_version=$(echo $ac_cv_build_version | sed 's/[[_|-]]\+/./g')
+      ac_cv_build_version_extra=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+      if test "x$ac_cv_build_version_extra" != "xmaster"; then
+         ac_cv_build_version="$ac_cv_build_version [[$ac_cv_build_version_extra]]"
+      fi
+   else
+      ac_cv_build_version=$PACKAGE_VERSION
+   fi
+])
+ac_build_version="$ac_cv_build_version"
+AC_DEFINE_UNQUOTED(CONFIG_BUILD_VERSION, ["$ac_build_version"], [Build version string.])
+
+# Sanitized version string.
+AC_CACHE_VAL([ac_cv_version], [
+   ac_cv_version=$(echo $PACKAGE_VERSION | sed -r 's/^([[0-9|\.]]+).*$/\1/')
+])
+ac_version="$ac_cv_version"
+AC_DEFINE_UNQUOTED(CONFIG_VERSION, ["$ac_version"], [Version string.])
+AC_SUBST(ac_version)
 
 # Set default installation prefix.
 AC_PREFIX_DEFAULT(/usr/local)
-ac_prefix=$prefix
-if test "x$ac_prefix" = "xNONE"; then
-    ac_prefix=$ac_default_prefix
+if test "x$prefix" = "xNONE"; then
+   prefix=$ac_default_prefix
 fi
+if test "x$exec_prefix" = "xNONE"; then
+   exec_prefix=$prefix
+fi
+eval ac_prefix=$prefix
 AC_SUBST(ac_prefix)
 AC_DEFINE_UNQUOTED(CONFIG_PREFIX, ["$ac_prefix"], [Default installation prefix.])
+
+# Set default installation directories.
+eval ac_bindir=$bindir
+AC_SUBST(ac_bindir)
+AC_DEFINE_UNQUOTED(CONFIG_BINDIR, ["$ac_bindir"], [Default executable binary path.])
+
+eval ac_libdir=$libdir
+AC_SUBST(ac_libdir)
+AC_DEFINE_UNQUOTED(CONFIG_LIBDIR, ["$ac_libdir"], [Default object library path.])
+
+eval datarootdir=$datarootdir
+eval ac_datadir=$datadir
+AC_SUBST(ac_datadir)
+AC_DEFINE_UNQUOTED(CONFIG_DATADIR, ["$ac_datadir"], [Default arch-idependent data path.])
+
+eval ac_mandir=$mandir
+AC_SUBST(ac_mandir)
+AC_DEFINE_UNQUOTED(CONFIG_MANDIR, ["$ac_mandir"], [Default man page path.])
+
 
 # Enable debugging argument option.
 AC_ARG_ENABLE(debug,
@@ -35,12 +83,6 @@ AC_ARG_ENABLE(qt4,
   AC_HELP_STRING([--enable-qt4], [enable Qt4 build (default=no)]),
   [ac_qt4="$enableval"],
   [ac_qt4="no"])
-
-AC_ARG_ENABLE(qt5,
-  AC_HELP_STRING([--enable-qt5], [enable Qt5 build (default=yes)]),
-  [ac_qt5="$enableval"],
-  [ac_qt5="yes"])
-
 
 # Disable system tray argument option.
 AC_ARG_ENABLE(system_tray,
@@ -96,12 +138,6 @@ AC_ARG_ENABLE(dbus,
   [ac_dbus="$enableval"],
   [ac_dbus="yes"])
 
-if test "x$ac_dbus" = "xyes"; then
-   AC_DEFINE(CONFIG_DBUS, 1, [Define if D-Bus interface is enabled.])
-   ac_qdbus="qdbus"
-fi
-AC_SUBST(ac_qdbus)
-
 # Enable X11 unique/single instance.
 AC_ARG_ENABLE(xunique,
   AC_HELP_STRING([--enable-xunique], [enable X11 unique/single instance (default=yes)]),
@@ -115,7 +151,7 @@ AC_ARG_ENABLE(stacktrace,
 
 
 # Standard installation base dirs.
-ac_with_paths="/usr /usr/local"
+ac_with_paths=""
 
 # Set for alternate Qt4/5 installation dir.
 AC_ARG_WITH(qt4,
@@ -133,14 +169,7 @@ fi
 
 if test "x$ac_qt5_path" != "xno"; then
    ac_with_paths="$ac_with_paths $ac_qt5_path"
-   ac_qt5="yes"
-fi
-
-if test "x$ac_qt5" = "xno"; then
-   ac_qt4="yes"
-fi
-if test "x$ac_qt4" = "xyes"; then
-   ac_qt5="no"
+   ac_qt4="no"
 fi
 
 # Set for alternate JACK installation dir.
@@ -165,19 +194,31 @@ ac_ldflags=$LDFLAGS
 
 
 # Checks for programs.
-AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
 AC_PROG_CXXCPP
-AC_PROG_GCC_TRADITIONAL
 
 # Checks for languages.
-AC_LANG_C
 AC_LANG_CPLUSPLUS
 
+# Check for pkg-config.
+PKG_PROG_PKG_CONFIG
+
+# Check whether -std=c++11 support is necessary (4 < g++ version < 6).
+AC_CACHE_CHECK([for g++ major version], [ac_cv_gxx_version_major], [
+   ac_cv_gxx_version_major=$($CC -dumpversion)
+   if test -n "$ac_cv_gxx_version_major"; then
+      ac_cv_gxx_version_major=$(echo $ac_cv_gxx_version_major | cut -d'.' -f1);
+   fi
+   ac_gxx_version_major=$(($ac_cv_gxx_version_major + 0))
+])
+ac_gxx_version_major=$ac_cv_gxx_version_major
+if test $ac_gxx_version_major -ge 4 -a $ac_gxx_version_major -lt 6; then
+   CXXFLAGS="-std=c++11 $CXXFLAGS"
+fi
 
 # Check for proper flags.
-ac_arch=`uname -m`
+ac_arch=$(uname -m)
 
 # Check for install paths and alternatives...
 ac_libdirs="lib"
@@ -214,8 +255,7 @@ ac_errmsg="not found in current PATH. Maybe QT development environment isn't ava
 
 if test "x$ac_qt4" = "xyes"; then
    AC_PATH_PROG(ac_qmake, qmake-qt4, [no], $ac_path)
-fi
-if test "x$ac_qt5" = "xyes"; then
+else
    AC_PATH_PROG(ac_qmake, qmake-qt5, [no], $ac_path)
 fi
 if test "x$ac_qmake" = "xno"; then
@@ -226,18 +266,29 @@ if test "x$ac_qmake" = "xno"; then
    AC_MSG_ERROR([qmake $ac_errmsg])
 fi
 
-# Check for proper Qt4/5 major version.
-ac_qt_version_major=`$ac_qmake -query QT_VERSION | cut -d. -f1`
-if test "x$ac_qt4" = "xyes" -a "x$ac_qt_version_major" != "x4"; then
-   AC_MSG_ERROR([qmake-qt4 $ac_errmsg (qt4-devel)])
-fi
-if test "x$ac_qt5" = "xyes" -a "x$ac_qt_version_major" != "x5"; then
-   AC_MSG_ERROR([qmake-qt5 $ac_errmsg (qt5-devel)])
+# Check for proper Qt major version.
+AC_CACHE_CHECK([for Qt major version], [ac_cv_qt_version_major], [
+   ac_cv_qt_version_major=$($ac_qmake -query QT_VERSION | cut -d'.' -f1)
+   ac_cv_qt_version_major=$(($ac_cv_qt_version_major + 0))
+])
+ac_qt_version_major=$ac_cv_qt_version_major
+if test "x$ac_qt4" = "xyes"; then
+   if test $ac_qt_version_major -ne 4; then
+      AC_MSG_ERROR([qmake-qt4 $ac_errmsg (qt4-devel)])
+   fi
+else
+   if test $ac_qt_version_major -ne 5; then
+      AC_MSG_ERROR([qmake-qt5 $ac_errmsg (qt5-devel)])
+   fi
 fi
 
-ac_qt_install_bins=`$ac_qmake -query QT_INSTALL_BINS`
-if test -d $ac_qt_install_bins; then
-   ac_path="$ac_qt_install_bins:$ac_path"
+# Check for proper Qt install path.
+AC_CACHE_CHECK([for Qt install path], [ac_cv_qt_install_path], [
+   ac_cv_qt_install_path=$($ac_qmake -query QT_INSTALL_BINS)
+])
+ac_qt_install_path=$ac_cv_qt_install_path
+if test -d $ac_qt_install_path; then
+   ac_path="$ac_qt_install_path:$ac_path"
 fi
 
 # Check it again, now with updated PATH, just in case...
@@ -249,24 +300,30 @@ fi
 
 AC_SUBST(ac_qmake)
 
-ac_qt_install_headers=`$ac_qmake -query QT_INSTALL_HEADERS`
+AC_CACHE_CHECK([for Qt install headers], [ac_cv_qt_install_headers], [
+   ac_cv_qt_install_headers=$($ac_qmake -query QT_INSTALL_HEADERS)
+])
+ac_qt_install_headers=$ac_cv_qt_install_headers
 if test -d $ac_qt_install_headers; then
    CFLAGS="-I$ac_qt_install_headers $CFLAGS "
    CPPFLAGS="-I$ac_qt_install_headers $CPPFLAGS"
    ac_incpath="$ac_qt_install_headers $ac_incpath"
 fi
 
-ac_qt_install_libs=`$ac_qmake -query QT_INSTALL_LIBS`
+AC_CACHE_CHECK([for Qt install libraries], [ac_cv_qt_install_libs], [
+   ac_cv_qt_install_libs=$($ac_qmake -query QT_INSTALL_LIBS)
+])
+ac_qt_install_libs=$ac_cv_qt_install_libs
 if test -d $ac_qt_install_libs; then
    LIBS="-L$ac_qt_install_libs $LIBS"
    ac_libs="-L$ac_qt_install_libs $ac_libs"
 fi
 
-# Check for proper Qt4/5 version.
+# Finally, check for proper Qt4/5 version.
 if test "x$ac_qt4" = "xyes"; then
    AC_CACHE_CHECK([for Qt library version >= 4.4],
       ac_cv_qtversion, [
-      AC_TRY_LINK([#include "QtCore/qglobal.h"], [
+      AC_TRY_COMPILE([#include "QtCore/qglobal.h"], [
          #if QT_VERSION < 0x040400 || QT_VERSION >= 0x050000
          #error Qt library 4.4 or greater required.
          #endif
@@ -275,12 +332,10 @@ if test "x$ac_qt4" = "xyes"; then
          exit 1
       ])
    ])
-fi
- 
-if test "x$ac_qt5" = "xyes"; then
+else
    AC_CACHE_CHECK([for Qt library version >= 5.1],
       ac_cv_qtversion, [
-      AC_TRY_LINK([#include "QtCore/qglobal.h"], [
+      AC_TRY_COMPILE([#include "QtCore/qglobal.h"], [
          #if QT_VERSION < 0x050100 || QT_VERSION >= 0x060000
          #error Qt library 5.1 or greater required.
          #endif
@@ -332,50 +387,47 @@ if test "x$ac_round" = "xyes"; then
 fi
 
 # Check for JACK libraries.
-AC_CHECK_LIB(jack, main, [ac_jack_lib="yes"], [ac_jack_lib="no"])
-if test "x$ac_jack_lib" = "xno"; then
-   AC_MSG_ERROR([JACK library not found.])
+PKG_CHECK_MODULES([JACK], [jack >= 0.100.0], [ac_jack_lib="yes"], [ac_jack_lib="no"])
+if test "x$ac_jack_lib" = "xyes"; then
+   AC_DEFINE(CONFIG_JACK, 1, [Define if JACK library is available.])
+   ac_cflags="$ac_cflags $JACK_CFLAGS"
+   ac_libs="$ac_libs $JACK_LIBS"
+   CFLAGS="$CFLAGS $JACK_CFLAGS"
+   CPPFLAGS="$CPPFLAGS $JACK_CFLAGS"
+   LIBS="$LIBS $JACK_LIBS"
+else
+   AC_MSG_ERROR([*** JACK library not found.])
 fi
-ac_libs="$ac_libs -ljack"
 
 # Check for ALSA libraries and primarily
 # for ALSA/MIDI sequencer support.
 if test "x$ac_alsa_seq" = "xyes"; then
-   AC_CHECK_LIB(asound, main, [ac_alsa_lib="yes"], [ac_alsa_lib="no"])
-   if test "x$ac_alsa_lib" = "xno"; then
-      AC_MSG_WARN([*** ALSA library not found.])
-      ac_alsa_seq="no"
-   else
-      ac_libs="$ac_libs -lasound"
-   fi
+   PKG_CHECK_MODULES([ALSA], [alsa], [ac_alsa_seq="yes"], [ac_alsa_seq="no"])
+fi
+if test "x$ac_alsa_seq" = "xyes"; then
+   AC_DEFINE(CONFIG_ALSA_SEQ, 1, [Define if ALSA library is available.])
+   ac_cflags="$ac_cflags $ALSA_CFLAGS"
+   ac_libs="$ac_libs $ALSA_LIBS"
+else
+   AC_MSG_WARN([*** ALSA library not found.])
 fi
 
 if test "x$ac_portaudio" = "xyes"; then
-   AC_CHECK_LIB(portaudio, main, [ac_portaudio_lib="yes"], [ac_portaudio_lib="no"])
-   if test "x$ac_portaudio_lib" = "xno"; then
-      AC_MSG_WARN([*** PortAudio library not found.])
-      ac_portaudio="no"
-   else
-      ac_libs="$ac_libs -lportaudio"
-   fi
+   PKG_CHECK_MODULES([PORTAUDIO], [portaudio-2.0], [ac_portaudio="yes"], [ac_portaudio="no"])
 fi
-
-# Some recent distros (eg. fedora, debian) require this.
-ac_libs="$ac_libs -lX11"
-
-AC_SUBST(ac_libs)
+if test "x$ac_portaudio" = "xyes"; then
+   AC_DEFINE(CONFIG_PORTAUDIO 1, [Define if PORTAUDIO library is available.])
+   ac_cflags="$ac_cflags $PORTAUDIO_CFLAGS"
+   ac_libs="$ac_libs $PORTAUDIO_LIBS"
+else
+   AC_MSG_WARN([*** PORTAUDIO library not found.])
+fi
 
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h sys/ioctl.h unistd.h poll.h signal.h)
-
-# Check for JACK headers.
-AC_CHECK_HEADER(jack/jack.h, [ac_jack_h="yes"], [ac_jack_h="no"])
-if test "x$ac_jack_h" = "xno"; then
-   AC_MSG_ERROR([JACK headers not found.])
-fi
 
 # Check for jack/statistics.h header.
 AC_CHECK_HEADER(jack/statistics.h, [ac_jack_statistics_h="yes"], [ac_jack_statistics_h="no"])
@@ -427,44 +479,45 @@ if test "x$ac_jack_metadata" = "xyes"; then
    fi
 fi
 
-# Check for ALSA headers and ultimately
-# for ALSA/MIDI sequencer support.
-if test "x$ac_alsa_seq" = "xyes"; then
-   AC_CHECK_HEADER(alsa/asoundlib.h, [ac_alsa_h="yes"], [ac_alsa_h="no"])
-   if test "x$ac_alsa_h" = "xyes"; then
-      AC_DEFINE(CONFIG_ALSA_SEQ, 1, [Define if ALSA/MIDI sequencer support is enabled.])
+# Check D-Bus interface support.
+if test "x$ac_dbus" = "xyes"; then
+   if test "x$ac_qt4" = "xno"; then
+      PKG_CHECK_MODULES([QT5DBUS], [Qt5DBus], [ac_dbus="yes"], [ac_dbus="no"])
    else
-      AC_MSG_WARN([*** ALSA headers not found.])
-      AC_MSG_WARN([*** ALSA/MIDI sequencer support will be disabled.])
-      ac_alsa_seq="no"
+      PKG_CHECK_MODULES([QT4DBUS], [QtDBus],  [ac_dbus="yes"], [ac_dbus="no"])
    fi
 fi
-
-# Check for PortAudio headers and library support.
-if test "x$ac_portaudio" = "xyes"; then
-   AC_CHECK_HEADER(portaudio.h, [ac_portaudio_h="yes"], [ac_portaudio_h="no"])
-   if test "x$ac_portaudio_h" = "xyes"; then
-      AC_DEFINE(CONFIG_PORTAUDIO, 1, [Define if PortAudio interface is enabled.])
-   else
-      AC_MSG_WARN([*** PortAudio headers not found.])
-      AC_MSG_WARN([*** PortAudio interface support will be disabled.])
-      ac_portaudio="no"
-   fi
+if test "x$ac_dbus" = "xyes"; then
+   AC_DEFINE(CONFIG_DBUS, 1, [Define if D-Bus interface is enabled.])
+   ac_qdbus="dbus"
 fi
+AC_SUBST(ac_qdbus)
 
 # Check for X11 unique/single instance.
+if test "x$ac_xunique" = "xyes" -a "x$ac_qt4" = "xno"; then
+   PKG_CHECK_MODULES([QT5X11EXTRAS], [Qt5X11Extras], [ac_xunique="yes"], [ac_xunique="no"])
+fi
 if test "x$ac_xunique" = "xyes"; then
    AC_DEFINE(CONFIG_XUNIQUE, 1, [Define if X11 unique/single instance is enabled.])
+   if test "x$ac_qt4" = "xno"; then
+      ac_qx11extras="x11extras"
+   fi
+   # Some recent distros (eg. fedora, debian) require this.
+   if test "x$ac_cv_lib_X11_main" = "xyes"; then
+      ac_libs="$ac_libs -lX11"
+   fi
 fi
+AC_SUBST(ac_qx11extras)
 
 # Check for debugging stack-trace.
 if test "x$ac_stacktrace" = "xyes"; then
    AC_DEFINE(CONFIG_STACKTRACE, 1, [Define if debugger stack-trace is enabled.])
 fi
 
-AC_SUBST(ac_incpath)
 AC_SUBST(ac_cflags)
 AC_SUBST(ac_ldflags)
+AC_SUBST(ac_incpath)
+AC_SUBST(ac_libs)
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -536,7 +589,7 @@ AC_OUTPUT
 # Output summary message
 
 echo
-echo "  $PACKAGE_NAME $PACKAGE_VERSION"
+echo "  $PACKAGE_NAME $ac_build_version"
 echo
 echo "  Build target . . . . . . . . . . . . . . . . . . .: $ac_debug"
 echo

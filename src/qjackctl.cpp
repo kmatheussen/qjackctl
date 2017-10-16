@@ -1,7 +1,7 @@
 // qjackctl.cpp
 //
 /****************************************************************************
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -36,14 +36,12 @@ const WindowFlags WindowCloseButtonHint = WindowFlags(0x08000000);
 }
 #endif
 
+#ifndef CONFIG_PREFIX
+#define CONFIG_PREFIX	"/usr/local"
+#endif
 
-#define CONFIG_QUOTE1(x) #x
-#define CONFIG_QUOTED(x) CONFIG_QUOTE1(x)
-
-#if defined(DATADIR)
-#define CONFIG_DATADIR CONFIG_QUOTED(DATADIR)
-#else
-#define CONFIG_DATADIR CONFIG_PREFIX "/share"
+#ifndef CONFIG_DATADIR
+#define CONFIG_DATADIR	CONFIG_PREFIX "/share"
 #endif
 
 
@@ -64,6 +62,8 @@ const WindowFlags WindowCloseButtonHint = WindowFlags(0x08000000);
 
 #ifdef CONFIG_X11
 #ifdef CONFIG_XUNIQUE
+
+#include <unistd.h> /* for gethostname() */
 
 #include <QX11Info>
 
@@ -185,9 +185,9 @@ public:
 		m_pWidget = pWidget;
 	#ifdef CONFIG_X11
 	#ifdef CONFIG_XUNIQUE
-		if (m_pDisplay) {
+		m_wOwner = m_pWidget->winId();
+		if (m_pDisplay && m_wOwner) {
 			XGrabServer(m_pDisplay);
-			m_wOwner = m_pWidget->winId();
 			XSetSelectionOwner(m_pDisplay, m_aUnique, m_wOwner, CurrentTime);
 			XUngrabServer(m_pDisplay);
 		}
@@ -269,7 +269,7 @@ public:
 #ifdef CONFIG_XUNIQUE
 	void x11PropertyNotify(Window w)
 	{
-		if (m_pWidget && m_wOwner == w) {
+		if (m_pDisplay && m_pWidget && m_wOwner == w) {
 			// Always check whether our property-flag is still around...
 			Atom aType;
 			int iFormat = 0;
@@ -531,3 +531,4 @@ int main ( int argc, char **argv )
 }
 
 // end of qjackctl.cpp
+

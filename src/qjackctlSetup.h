@@ -1,7 +1,7 @@
 // qjackctlSetup.h
 //
 /****************************************************************************
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -158,6 +158,7 @@ public:
 	int     iConnectionsIconSize;
 	QString sConnectionsFont;
 	bool    bQueryClose;
+	bool    bQueryShutdown;
 	bool    bKeepOnTop;
 	bool    bSystemTray;
 	bool    bSystemTrayQueryClose;
@@ -165,9 +166,9 @@ public:
 	bool    bServerConfig;
 	QString sServerConfigName;
 	bool    bServerConfigTemp;
-	bool    bQueryShutdown;
 	bool    bAlsaSeqEnabled;
 	bool    bDBusEnabled;
+	bool    bJackDBusEnabled;
 	bool    bAliasesEnabled;
 	bool    bAliasesEditing;
 	bool    bLeftButtons;
@@ -230,3 +231,4 @@ private:
 
 
 // end of qjackctlSetup.h
+

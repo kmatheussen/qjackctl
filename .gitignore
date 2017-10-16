@@ -1,6 +1,7 @@
 Makefile
 config.*
 configure
+*.m4
 *.mak
 *.spec
 *.desktop
@@ -9,6 +10,7 @@ configure
 *.o
 *.so
 *.pro.user
+*.qmake.stash
 qrc_*.cpp
 .moc
 .obj

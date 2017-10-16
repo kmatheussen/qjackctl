@@ -1,7 +1,7 @@
 // qjackctlSystemTray.cpp
 //
 /****************************************************************************
-   Copyright (C) 2003-2013, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2016, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -42,15 +42,21 @@ qjackctlSystemTray::qjackctlSystemTray ( QWidget *pParent )
 	// Set things inherited...
 	if (pParent) {
 		m_icon = pParent->windowIcon();
+		setBackground(Qt::transparent); // also updates pixmap.
 		QSystemTrayIcon::setIcon(m_icon);
 		QSystemTrayIcon::setToolTip(pParent->windowTitle());
 	}
 
+	// Set proper context menu, even though it's empty...
+	QSystemTrayIcon::setContextMenu(&m_menu);
+
+	QObject::connect(&m_menu,
+		SIGNAL(aboutToShow()),
+		SLOT(contextMenuRequested()));
+
 	QObject::connect(this,
 		SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
 		SLOT(activated(QSystemTrayIcon::ActivationReason)));
-
-	setBackground(Qt::transparent);
 
 	QSystemTrayIcon::show();
 }
@@ -67,9 +73,11 @@ void qjackctlSystemTray::close (void)
 void qjackctlSystemTray::activated ( QSystemTrayIcon::ActivationReason reason )
 {
 	switch (reason) {
+#if 0
 	case QSystemTrayIcon::Context:
-		emit contextMenuRequested(QCursor::pos());
+		contextMenuRequested();
 		break;
+#endif
 	case QSystemTrayIcon::Trigger:
 		emit clicked();
 		break;
@@ -77,10 +85,18 @@ void qjackctlSystemTray::activated ( QSystemTrayIcon::ActivationReason reason )
 		emit middleClicked();
 		break;
 	case QSystemTrayIcon::DoubleClick:
+		emit doubleClicked();
+		break;
 	case QSystemTrayIcon::Unknown:
 	default:
 		break;
 	}
+}
+
+
+void qjackctlSystemTray::contextMenuRequested (void)
+{
+	emit contextMenuRequested(QCursor::pos());
 }
 
 
@@ -94,14 +110,15 @@ qjackctlSystemTray::~qjackctlSystemTray (void)
 void qjackctlSystemTray::updatePixmap (void)
 {
 	// Renitialize icon as fit...
-	m_pixmap = m_icon.pixmap(22, 22);
+	m_pixmap = m_icon.pixmap(32, 32);
 
-    // Merge with the overlay pixmap...
+	// Merge with the overlay pixmap...
 	if (!m_pixmapOverlay.mask().isNull()) {
+		const int y = m_pixmap.height() - m_pixmapOverlay.height();
 		QBitmap mask = m_pixmap.mask();
-		QPainter(&mask).drawPixmap(0, 0, m_pixmapOverlay.mask());
+		QPainter(&mask).drawPixmap(0, y, m_pixmapOverlay.mask());
 		m_pixmap.setMask(mask);
-		QPainter(&m_pixmap).drawPixmap(0, 0, m_pixmapOverlay);
+		QPainter(&m_pixmap).drawPixmap(0, y, m_pixmapOverlay);
 	}
 
 	if (m_background != Qt::transparent) {

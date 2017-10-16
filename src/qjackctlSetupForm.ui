@@ -3,7 +3,7 @@
  <author>rncbc aka Rui Nuno Capela</author>
  <comment>JACK Audio Connection Kit - Qt GUI Interface.
 
-   Copyright (C) 2003-2015, rncbc aka Rui Nuno Capela. All rights reserved.
+   Copyright (C) 2003-2017, rncbc aka Rui Nuno Capela. All rights reserved.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -782,17 +782,17 @@
                </property>
                <item>
                 <property name="text">
-                 <string>jackd -S</string>
+				 <string>jackd</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>jackdmp -S</string>
+				 <string>jackdmp</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>jackstart -S</string>
+				 <string>jackstart</string>
                 </property>
                </item>
               </widget>
@@ -1089,7 +1089,7 @@
                 </font>
                </property>
                <property name="toolTip">
-                <string>Set client timeout limit in miliseconds</string>
+                <string>Set client timeout limit in milliseconds</string>
                </property>
                <property name="editable">
                 <bool>true</bool>
@@ -3532,6 +3532,22 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="QueryShutdownCheckBox">
+              <property name="font">
+               <font>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string>Whether to ask for confirmation on JACK audio server shutdown</string>
+              </property>
+              <property name="text">
+               <string>Confirm server sh&amp;utdown</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QCheckBox" name="KeepOnTopCheckBox">
               <property name="font">
                <font>
@@ -3676,22 +3692,6 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="QueryShutdownCheckBox">
-              <property name="font">
-               <font>
-                <weight>50</weight>
-                <bold>false</bold>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string>Whether to ask for confirmation on JACK audio server shutdown</string>
-              </property>
-              <property name="text">
-               <string>Confirm server sh&amp;utdown</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QCheckBox" name="AlsaSeqEnabledCheckBox">
               <property name="font">
                <font>
@@ -3720,6 +3720,22 @@
               </property>
               <property name="text">
                <string>&amp;Enable D-Bus interface</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="JackDBusEnabledCheckBox">
+              <property name="font">
+               <font>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string>Whether to enable JACK D-Bus interface</string>
+              </property>
+              <property name="text">
+               <string>&amp;Enable JACK D-Bus interface</string>
               </property>
              </widget>
             </item>
@@ -4098,6 +4114,7 @@
   <tabstop>JackClientPortMetadataCheckBox</tabstop>
   <tabstop>StartJackCheckBox</tabstop>
   <tabstop>QueryCloseCheckBox</tabstop>
+  <tabstop>QueryShutdownCheckBox</tabstop>
   <tabstop>KeepOnTopCheckBox</tabstop>
   <tabstop>SystemTrayCheckBox</tabstop>
   <tabstop>SystemTrayQueryCloseCheckBox</tabstop>
@@ -4106,9 +4123,9 @@
   <tabstop>ServerConfigCheckBox</tabstop>
   <tabstop>ServerConfigNameComboBox</tabstop>
   <tabstop>ServerConfigTempCheckBox</tabstop>
-  <tabstop>QueryShutdownCheckBox</tabstop>
   <tabstop>AlsaSeqEnabledCheckBox</tabstop>
   <tabstop>DBusEnabledCheckBox</tabstop>
+  <tabstop>JackDBusEnabledCheckBox</tabstop>
   <tabstop>StopJackCheckBox</tabstop>
   <tabstop>LeftButtonsCheckBox</tabstop>
   <tabstop>RightButtonsCheckBox</tabstop>

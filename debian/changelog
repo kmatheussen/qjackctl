@@ -1,3 +1,33 @@
+qjackctl (0.4.5-28) unstable; urgency=low
+
+  * Pre-LAC2015 release frenzy.
+
+ -- Rui Nuno Capela <rncbc@rncbc.org>  Thu, 27 Apr 2017 19:00:00 +0000
+
+qjackctl (0.4.4-27) unstable; urgency=low
+
+  * A Fall'16 release.
+
+ -- Rui Nuno Capela <rncbc@rncbc.org>  Mon, 14 Nov 2016 12:00:00 +0000
+
+qjackctl (0.4.3-26) unstable; urgency=low
+
+  * End of Summer'16 release.
+
+ -- Rui Nuno Capela <rncbc@rncbc.org>  Wed, 14 Sep 2016 12:00:00 +0100
+
+qjackctl (0.4.2-25) unstable; urgency=low
+
+  * Spring'16 release frenzy.
+
+ -- Rui Nuno Capela <rncbc@rncbc.org>  Tue,  5 Apr 2016 18:30:00 +0100
+
+qjackctl (0.4.1-24) unstable; urgency=low
+
+  * A Fall'15 release.
+
+ -- Rui Nuno Capela <rncbc@rncbc.org>  Wed, 28 Oct 2015 19:00:00 +0000
+
 qjackctl (0.4.0-23) unstable; urgency=low
 
   * Summer'15 release frenzy.

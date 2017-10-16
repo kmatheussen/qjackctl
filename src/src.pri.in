@@ -1,7 +1,14 @@
 # qjackctl.pri
 #
 PREFIX  = @ac_prefix@
+BINDIR  = @ac_bindir@
+LIBDIR  = @ac_libdir@
+DATADIR = @ac_datadir@
+MANDIR  = @ac_mandir@
+
+VERSION = @ac_version@
 CONFIG += @ac_debug@
+
 INCLUDEPATH += @ac_incpath@
 LIBS += @ac_libs@
 
@@ -12,5 +19,13 @@ QMAKE_LFLAGS += @ac_ldflags@
 # D-BUS support
 QDBUS = @ac_qdbus@
 !isEmpty(QDBUS) {
-  QT += dbus
+	QT += dbus
+}
+
+# X11 support
+unix:!macx {
+	QX11EXTRAS = @ac_qx11extras@
+	!isEmpty(QX11EXTRAS) {
+		QT += x11extras
+	}
 }
