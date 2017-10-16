@@ -39,7 +39,7 @@ int have_libjack (void) {
 
 static void* lib_open(const char* const so) {
 #ifdef _WIN32
-	return (void*) LoadLibraryA(so);
+return (void*) LoadLibraryEx(so, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
 #else
 	return dlopen(so, RTLD_NOW|RTLD_LOCAL);
 #endif
@@ -111,16 +111,19 @@ static void init_weak_jack(void)
 	}
 #elif (defined _WIN32)
 # ifdef __x86_64__
+        printf("NOT Trying to open -e:\\windows_dist64\\bin\\jack_local\\libjack.dll-\n");
 	lib = lib_open("libjack64.dll");
 # else
-	lib = lib_open("libjack.dll");
+        printf("Trying to open -e:\\windows_dist64\\bin\\jack_local\\win32libs\libjack.dll-\n");
+        fflush(stdout);
+	lib = lib_open("e:\\windows_dist64\\bin\\jack_local\\win32libs\\libjack.dll");
 # endif
 #else
 	lib = lib_open("libjack.so.0");
 #endif
 	if (!lib) {
 #ifndef NDEBUG
-		fprintf(stderr, "*** WEAK-JACK: libjack was not found\n");
+          fprintf(stderr, "*** WEAK-JACK: libjack was not found: %d\n", (int)GetLastError());
 #endif
 		_status = -2;
 		return;

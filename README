@@ -11,6 +11,12 @@ versions of the Radium music editor.
 To compile a 32 bit version of qjackctl for Windows, execute "./build_mingw.sh 32"
 To compile a 64 bit version of qjackctl for Windows, execute "./build_mingw.sh 64"
 
+To show text in the console when running qjackctl from the console, add this line to src/src.pro:
+CONFIG+=console
+
+To use the freetype fontengine, add this line to src/src.pro:
+WindowsArguments = fontengine=freetype
+
 
 
 

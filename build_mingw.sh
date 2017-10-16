@@ -2,15 +2,17 @@
 
 if [[ $1 == "32" ]] ; then
     MINGW=mingw32
-    CC=i686-w64-mingw32-gcc
-    CXX=i686-w64-mingw32-g++
+    ARCH=i686-w64-mingw32.static
 fi
 
 if [[ $1 == "64" ]] ; then
-   MINGW=mingw64
-   CC=x86_64-w64-mingw32-gcc
-   CXX=x86_64-w64-mingw32-g++
+    MINGW=mingw64
+    ARCH=x86_64-w64-mingw32.static
 fi
+
+CC=$ARCH-gcc
+CXX=$ARCH-g++
+PKG=$ARCH-pkg-config
 
 if [ -z $MINGW ] ; then
     echo "Must either run \"$0 32\" (for 32 bit build) or  \"$0 64\" (for 64 bit build)"
@@ -33,8 +35,8 @@ function clean_and_configure {
     make -f Makefile.git clean
     ./autogen.sh
 
-    $MINGW-qmake-qt4
-#    $MINGW-qmake-qt5 # It compiles, but complains about missing windows plugin.
+    $ARCH-qmake-qt5
+#    $ARCH-qmake-qt5 # It compiles, but complains about missing windows plugin.
 
     cp mingw/mingw_config.h src/config.h
 
@@ -89,14 +91,17 @@ fi
 ######### BUILD
 ####################################
 
-EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -I`pwd`/mingw/$1/portaudio/include -DNO_JACK_METADATA -DUSE_WEAK_JACK"
+EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUSE_WEAK_JACK `$PKG --cflags portaudio-2.0`"
+# 
+#-I`pwd`/mingw/$1/portaudio/include
 
 $CC $EXTRAFLAGS mingw/weakjack/weak_libjack.c -Wall -c -O2 -o weak_libjack.o
-cp mingw/$1/portaudio/lib/.libs/libportaudio.a .
+#cp mingw/$1/portaudio/lib/.libs/libportaudio.a .
 
-$MINGW-make -j8 CC="$CC $EXTRAFLAGS" CXX="$CXX $EXTRAFLAGS" LINK="../mingw/linker$1.sh $CXX" LINKER="../mingw/linker$1.sh $CXX"
+EXTRALDFLAGS=-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
+#`$PKG --libs portaudio-2.0`
 
-
+make -j8 CC="$CC $EXTRAFLAGS" CXX="$CXX $EXTRAFLAGS" LINK="EXTRALDFLAGS=$EXTRALDFLAGS ../mingw/linker$1.sh $CXX" LINKER="EXTRALDFLAGS=$EXTRALDFLAGS ../mingw/linker$1.sh $CXX"
 
 
 
