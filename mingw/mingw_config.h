@@ -17,7 +17,7 @@
 #define CONFIG_JACK_FREE 1
 
 /* Define if jack_get_max_delayed_usecs is available. */
-#define CONFIG_JACK_MAX_DELAY 1
+//#define CONFIG_JACK_MAX_DELAY 1
 
 /* Define if JACK metadata support is available. */
 //#define CONFIG_JACK_METADATA 1
@@ -44,7 +44,7 @@
 /* #undef CONFIG_JACK_VERSION */
 
 /* Define if jack_get_xrun_delayed_usecs is available. */
-#define CONFIG_JACK_XRUN_DELAY 1
+//#define CONFIG_JACK_XRUN_DELAY 1
 
 /* Define if PortAudio interface is enabled. */
 /* #undef CONFIG_PORTAUDIO */
@@ -136,3 +136,5 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+#define CONFIG_BUILD_VERSION "Qjackctl 0.3.13.10 for Radium"

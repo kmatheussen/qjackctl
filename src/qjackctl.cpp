@@ -19,6 +19,8 @@
 
 *****************************************************************************/
 
+#include <weak_libjack.h>
+
 #include "qjackctlAbout.h"
 #include "qjackctlSetup.h"
 #include "qjackctlMainForm.h"
@@ -423,6 +425,8 @@ void stacktrace ( int signo )
 // main - The main program trunk.
 //
 
+extern "C" void init_weak_jack(void);
+  
 int main ( int argc, char **argv )
 {
 	Q_INIT_RESOURCE(qjackctl);
@@ -437,6 +441,8 @@ int main ( int argc, char **argv )
 #endif
 	qjackctlApplication app(argc, argv);
 
+        init_weak_jack();
+          
 	// Construct default settings; override with command line arguments.
 	qjackctlSetup settings;
 	if (!settings.parse_args(app.arguments())) {

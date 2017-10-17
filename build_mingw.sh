@@ -48,7 +48,7 @@ function clean_and_configure {
 ########## PATCH
 ###################################
 
-if ! grep "CONFIG+=static" src/src.pro ; then
+if ! grep "CONFIG += static" src/src.pro ; then
     echo "Can not find CONFIG+=static in src/src.pro"
     exit -1
 
@@ -95,8 +95,9 @@ EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUS
 # 
 #-I`pwd`/mingw/$1/portaudio/include
 
+# compile weakjack
 $CC $EXTRAFLAGS mingw/weakjack/weak_libjack.c -Wall -c -O2 -o weak_libjack.o
-#cp mingw/$1/portaudio/lib/.libs/libportaudio.a .
+$CXX $EXTRAFLAGS mingw/find_jack_library.cpp -Wall -c -O2 `$PKG --cflags Qt5Core` -std=gnu++11 -o find_jack_library.o
 
 EXTRALDFLAGS=-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
 #`$PKG --libs portaudio-2.0`

@@ -25,7 +25,7 @@
 #include <QString>
 #include <QHash>
 
-#include <jack/jack.h>
+#include <weak_libjack.h>
 
 // Forward decls.
 class QSettings;

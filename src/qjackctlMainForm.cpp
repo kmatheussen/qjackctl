@@ -19,6 +19,10 @@
 
 *****************************************************************************/
 
+
+#include <weak_libjack.h>
+
+
 #include "qjackctlAbout.h"
 #include "qjackctlMainForm.h"
 
@@ -53,10 +57,6 @@
 #include <QContextMenuEvent>
 #include <QCloseEvent>
 
-#if defined(WIN32)
-#include <QPlastiqueStyle>
-#endif
-
 
 #if QT_VERSION < 0x040500
 namespace Qt {
@@ -70,6 +70,8 @@ const WindowFlags WindowCloseButtonHint = WindowFlags(0x08000000);
 #include <QThread>
 #endif
 
+
+/*
 #ifdef CONFIG_JACK_STATISTICS
 #include <jack/statistics.h>
 #endif
@@ -77,6 +79,7 @@ const WindowFlags WindowCloseButtonHint = WindowFlags(0x08000000);
 #ifdef CONFIG_JACK_METADATA
 #include <jack/metadata.h>
 #endif
+*/
 
 // Timer constant stuff.
 #define QJACKCTL_TIMER_MSECS    200

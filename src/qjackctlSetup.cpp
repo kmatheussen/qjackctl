@@ -354,6 +354,9 @@ bool qjackctlSetup::saveAliases ( const QString& sPreset )
 //---------------------------------------------------------------------------
 // Preset management methods.
 
+#include "../mingw/find_jack_library_proc.h"
+#include <QDir>
+
 bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset )
 {
 	QString sSuffix;
@@ -366,10 +369,15 @@ bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset 
 
 	m_settings.beginGroup("/Settings" + sSuffix);
 #if defined(_WIN32)
-	preset.sServerPrefix = m_settings.value("/Server", "jackd -S").toString();
+        if (jack_is_installed_globally()) {
+          preset.sServerPrefix = m_settings.value("/Server", "jackd -S").toString();
+        } else {
+          preset.sServerPrefix = QString::fromWCharArray(find_libjack_dir()) + QDir::separator() + "jackd -S";
+        }
 #else
-	preset.sServerPrefix = m_settings.value("/Server", "jackd").toString();
+        preset.sServerPrefix = m_settings.value("/Server", "jackd").toString();
 #endif
+        
 	preset.sServerName  = m_settings.value("/ServerName").toString();
 	preset.bRealtime    = m_settings.value("/Realtime", true).toBool();
 	preset.bSoftMode    = m_settings.value("/SoftMode", false).toBool();
@@ -426,7 +434,8 @@ bool qjackctlSetup::savePreset ( qjackctlPreset& preset, const QString& sPreset 
 	}
 
 	m_settings.beginGroup("/Settings" + sSuffix);
-	m_settings.setValue("/Server",      preset.sServerPrefix);
+        if (!jack_is_installed_globally())
+          m_settings.setValue("/Server",      preset.sServerPrefix);
 	m_settings.setValue("/ServerName",  preset.sServerName);
 	m_settings.setValue("/Realtime",    preset.bRealtime);
 	m_settings.setValue("/SoftMode",    preset.bSoftMode);
