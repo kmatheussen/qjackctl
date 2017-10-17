@@ -93,7 +93,7 @@ const WindowFlags WindowCloseButtonHint = WindowFlags(0x08000000);
 #define QJACKCTL_STOPPING       5
 #define QJACKCTL_STOPPED        6
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <io.h>
 #undef HAVE_POLL_H
 #undef HAVE_SIGNAL_H
@@ -607,7 +607,7 @@ bool qjackctlMainForm::setup ( qjackctlSetup *pSetup )
 	resetXrunStats();
 
 	// Check if we can redirect our own stdout/stderr...
-#if !defined(WIN32)
+#if !defined(_WIN32)
 	if (m_pSetup->bStdoutCapture && ::pipe(g_fdStdout) == 0) {
 		::dup2(g_fdStdout[QJACKCTL_FDWRITE], STDOUT_FILENO);
 		::dup2(g_fdStdout[QJACKCTL_FDWRITE], STDERR_FILENO);
@@ -1134,7 +1134,7 @@ void qjackctlMainForm::startJack (void)
 	QString sCommand = args[0];
 	QFileInfo fi(sCommand);
 	if (fi.isRelative()) {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		const char chPathSep = ';';
 		if (fi.suffix().isEmpty())
 			sCommand += ".exe";
@@ -1143,14 +1143,14 @@ void qjackctlMainForm::startJack (void)
 	#endif
 		const QString sPath = ::getenv("PATH");
 		QStringList paths = sPath.split(chPathSep);
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		paths = paths << "C:\\Program Files\\Jack" << "C:\\Program Files (x86)\\Jack";
 	#endif
 		QStringListIterator iter(paths);
 		while (iter.hasNext()) {
 			const QString& sDirectory = iter.next();
 			fi.setFile(QDir(sDirectory), sCommand);
-		#if defined(WIN32)
+		#if defined(_WIN32)
 		#ifdef CONFIG_DEBUG
 			printf("\n\n\n\n abs_path: -%s-\ndir: -%s-\nsCommand: -%s-\nexists: %d, executable: %d\n\n",
 				   fi.absolutePath().toUtf8().constData(),
@@ -1355,7 +1355,7 @@ void qjackctlMainForm::startJack (void)
 
 		// Setup stdout/stderr capture...
 		if (m_pSetup->bStdoutCapture) {
-		#if defined(WIN32)
+		#if defined(_WIN32)
 			// QProcess::ForwardedChannels doesn't seem to work in windows.
 			m_pJack->setProcessChannelMode(QProcess::MergedChannels);
 		#else
@@ -1383,7 +1383,7 @@ void qjackctlMainForm::startJack (void)
 		appendMessages(tr("JACK is starting..."));
 		appendMessagesColor(m_sJackCmdLine, "#990099");
 
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		const QString& sCurrentDir = QFileInfo(sCommand).dir().absolutePath();
 		m_pJack->setWorkingDirectory(sCurrentDir);
 	//	QDir::setCurrent(sCurrentDir);
@@ -1484,7 +1484,7 @@ void qjackctlMainForm::stopJackServer (void)
 			if (m_pJack) {
 				appendMessages(tr("JACK is stopping..."));
 				m_bJackStopped = true;
-			#if defined(WIN32)
+			#if defined(_WIN32)
 				// Try harder...
 				m_pJack->kill();
 			#else
@@ -1548,7 +1548,7 @@ void qjackctlMainForm::appendStdoutBuffer ( const QString& s )
 		while (iter.hasNext()) {
 			sTemp = iter.next();
 			if (!sTemp.isEmpty())
-			#if defined(WIN32)
+			#if defined(_WIN32)
 				appendMessagesText(detectXrun(sTemp).trimmed());
 			#else
 				appendMessagesText(detectXrun(sTemp));
@@ -1731,7 +1731,7 @@ void qjackctlMainForm::updateXrunStats ( float fXrunLast )
 // Set stdout/stderr blocking mode.
 bool qjackctlMainForm::stdoutBlock ( int fd, bool bBlock ) const
 {
-#if !defined(WIN32)
+#if !defined(_WIN32)
 	const int iFlags = ::fcntl(fd, F_GETFL, 0);
 	const bool bNonBlock = bool(iFlags & O_NONBLOCK);
 	if (bBlock && bNonBlock)
@@ -1747,7 +1747,7 @@ bool qjackctlMainForm::stdoutBlock ( int fd, bool bBlock ) const
 // Own stdout/stderr socket notifier slot.
 void qjackctlMainForm::stdoutNotifySlot ( int fd )
 {
- #if !defined(WIN32)
+ #if !defined(_WIN32)
 	// Set non-blocking reads, if not already...
 	const bool bBlock = stdoutBlock(fd, false);
 	// Read as much as is available...
@@ -2442,7 +2442,7 @@ void qjackctlMainForm::exitNotifyEvent (void)
 		jackFinished();
 		break;
 	case QProcess::Crashed:
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		if (!m_bJackStopped)
 	#endif
 		appendMessagesColor(tr("JACK has crashed."), "#cc3366");
