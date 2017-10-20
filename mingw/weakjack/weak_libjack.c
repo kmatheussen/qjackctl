@@ -114,9 +114,6 @@ void init_weak_jack(void)
           lib = lib_open(true, "/usr/local/lib/libjack.dylib");
 	}
 #elif (defined _WIN32)
-# ifdef __x86_64__
-	lib = lib_open(true, L"libjack64.dll");
-# else
         bool installed_globally = jack_is_installed_globally();
         char temp[1000];
         const wchar_t *jacklibname = find_libjack_library(installed_globally);
@@ -124,7 +121,6 @@ void init_weak_jack(void)
         printf("Trying to open: -%s-. Global: %d\n", temp, installed_globally);
         fflush(stdout);        
 	lib = lib_open(installed_globally, jacklibname); //"e:\\windows_dist64\\bin\\jack_local\\win32libs\\libjack.dll");
-# endif
 #else
 	lib = lib_open("libjack.so.0");
 #endif
