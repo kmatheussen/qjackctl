@@ -434,7 +434,9 @@ bool qjackctlSetup::savePreset ( qjackctlPreset& preset, const QString& sPreset 
 	}
 
 	m_settings.beginGroup("/Settings" + sSuffix);
-        if (!jack_is_installed_globally())
+#if defined(_WIN32)
+        if (jack_is_installed_globally())
+#endif
           m_settings.setValue("/Server",      preset.sServerPrefix);
 	m_settings.setValue("/ServerName",  preset.sServerName);
 	m_settings.setValue("/Realtime",    preset.bRealtime);
