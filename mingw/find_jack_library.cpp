@@ -19,7 +19,8 @@ static wchar_t *get_wchar_t(const QString s){
 }
 
 static QString find_libjack_dir2(void){
-  return QCoreApplication::applicationDirPath() + QDir::separator() + "bin" + QDir::separator() + "jack_local";
+  return QDir::toNativeSeparators(QCoreApplication::applicationDirPath()) + QDir::separator() + "bin" + QDir::separator() + "jack_local";
+  //return QCoreApplication::applicationDirPath() + QDir::separator() + "bin" + QDir::separator() + "jack_local";
 }
 
 wchar_t *find_libjack_dir(void){
@@ -55,7 +56,7 @@ wchar_t *find_libjack_library(bool jack_is_installed_globally){
   if (jack_is_installed_globally) {
     return get_wchar_t("libjack64.dll");
   } else {
-    return get_wchar_t(find_libjack_dir2() + QDir::separator() + "libjack.dll";
+    return get_wchar_t(find_libjack_dir2() + QDir::separator() + "libjack64.dll");
   }
 #else
   if (jack_is_installed_globally) {

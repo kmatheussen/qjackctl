@@ -372,7 +372,7 @@ bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset 
         if (jack_is_installed_globally()) {
           preset.sServerPrefix = m_settings.value("/Server", "jackd -S").toString();
         } else {
-          preset.sServerPrefix = QString::fromWCharArray(find_libjack_dir()) + QDir::separator() + "jackd -S";
+          preset.sServerPrefix = QString::fromWCharArray(find_libjack_dir()) + QDir::separator() + "jackd.exe -S";
         }
 #else
         preset.sServerPrefix = m_settings.value("/Server", "jackd").toString();

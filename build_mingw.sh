@@ -79,6 +79,8 @@ if [ -f mingw_last_build_type.txt ] ; then
     fi
 fi
 
+#clean_and_configure
+
 echo $1 >mingw_last_build_type.txt
 
 
@@ -99,10 +101,10 @@ EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUS
 $CC $EXTRAFLAGS mingw/weakjack/weak_libjack.c -Wall -c -O2 -o weak_libjack.o
 $CXX $EXTRAFLAGS mingw/find_jack_library.cpp -Wall -c -O2 `$PKG --cflags Qt5Core` -std=gnu++11 -o find_jack_library.o
 
-EXTRALDFLAGS=-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
+EXTRALDFLAGS="`$PKG --static --libs Qt5Core` `x86_64-w64-mingw32.shared-pkg-config --libs portaudio-2.0`" #/home/kjetil/jack2/windows/Release64/bin/libportaudio_x86_64.a #-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
 #`$PKG --libs portaudio-2.0`
 
-make -j8 CC="$CC $EXTRAFLAGS" CXX="$CXX $EXTRAFLAGS" LINK="EXTRALDFLAGS=$EXTRALDFLAGS ../mingw/linker$1.sh $CXX" LINKER="EXTRALDFLAGS=$EXTRALDFLAGS ../mingw/linker$1.sh $CXX"
+make -j8 CC="$CC $EXTRAFLAGS" CXX="$CXX $EXTRAFLAGS" LINK="EXTRALDFLAGS=\"$EXTRALDFLAGS\" ../mingw/linker$1.sh $CXX" LINKER="EXTRALDFLAGS=\"$EXTRALDFLAGS\" ../mingw/linker$1.sh $CXX"
 
 
 

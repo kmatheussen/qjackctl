@@ -1050,6 +1050,7 @@ void qjackctlMainForm::shellExecute ( const QString& sShellCommand, const QStrin
 	appendMessages(sTemp);
 }
 
+#include "../mingw/find_jack_library_proc.h"
 
 // Start jack audio server...
 void qjackctlMainForm::startJack (void)
@@ -1129,7 +1130,20 @@ void qjackctlMainForm::startJack (void)
 	}
 
 	// Split the server path into arguments...
-	QStringList args = m_preset.sServerPrefix.split(' ');
+	QStringList args;
+#if defined(_WIN32)
+        if (jack_is_installed_globally()) {
+          args = m_preset.sServerPrefix.split(' ');
+        }else{
+          QString p = m_preset.sServerPrefix;
+          QString jackd_exe = "jackd.exe ";
+          int splitPos = p.indexOf(jackd_exe) + jackd_exe.size();
+          args << p.left(splitPos-1);
+          args << p.right(p.size()-splitPos).split(' ');
+        }
+#else
+        args = m_preset.sServerPrefix.split(' ');
+#endif
 
 	// Look for the executable in the search path;
 	// this enforces the server command to be an
