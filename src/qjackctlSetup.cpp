@@ -406,7 +406,7 @@ bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset 
 	preset.iOutChannels = m_settings.value("/OutChannels", 0).toInt();
 	preset.iInLatency   = m_settings.value("/InLatency", 0).toInt();
 	preset.iOutLatency  = m_settings.value("/OutLatency", 0).toInt();
-	preset.iStartDelay  = m_settings.value("/StartDelay", 2).toInt();
+	preset.iStartDelay  = m_settings.value("/StartDelay", 5).toInt();
 	preset.bVerbose     = m_settings.value("/Verbose", false).toBool();
 	preset.iPortMax     = m_settings.value("/PortMax", 256).toInt();
 	preset.sMidiDriver  = m_settings.value("/MidiDriver").toString();
