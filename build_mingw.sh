@@ -8,6 +8,7 @@ fi
 if [[ $1 == "64" ]] ; then
     MINGW=mingw64
     ARCH=x86_64-w64-mingw32.static
+    #ARCH=x86_64-w64-mingw32.shared
 fi
 
 CC=$ARCH-gcc
@@ -25,7 +26,7 @@ set -x
 
 function clean_and_configure {
     echo "*** Cleaning and configuring"
-    
+
     rm -f is_configured
    
     if [ -f Makefile ] ;  then
@@ -35,6 +36,8 @@ function clean_and_configure {
     make -f Makefile.git clean
     ./autogen.sh
 
+    echo "ARCH: $ARCH"
+    
     $ARCH-qmake-qt5
 #    $ARCH-qmake-qt5 # It compiles, but complains about missing windows plugin.
 
@@ -93,7 +96,7 @@ fi
 ######### BUILD
 ####################################
 
-EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUSE_WEAK_JACK `$PKG --cflags portaudio-2.0`"
+EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUSE_WEAK_JACK `$PKG --cflags portaudio-2.0`" # `$PKG --libs --static Qt5Core`"
 # 
 #-I`pwd`/mingw/$1/portaudio/include
 
@@ -101,7 +104,7 @@ EXTRAFLAGS="-I`pwd`/mingw/weakjack -I`pwd`/mingw/include -DNO_JACK_METADATA -DUS
 $CC $EXTRAFLAGS mingw/weakjack/weak_libjack.c -Wall -c -O2 -o weak_libjack.o
 $CXX $EXTRAFLAGS mingw/find_jack_library.cpp -Wall -c -O2 `$PKG --cflags Qt5Core` -std=gnu++11 -o find_jack_library.o
 
-EXTRALDFLAGS="`$PKG --static --libs Qt5Core` `x86_64-w64-mingw32.shared-pkg-config --libs portaudio-2.0`" #/home/kjetil/jack2/windows/Release64/bin/libportaudio_x86_64.a #-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
+EXTRALDFLAGS="`$PKG --static --libs Qt5Core` `$PKG --libs portaudio-2.0`" #/newhd/fedora19stuff/mxe_verynew/usr/x86_64-w64-mingw32.static/lib/libportaudio.a" # `$PKG --libs portaudio-2.0`" #/home/kjetil/jack2/windows/Release64/bin/libportaudio_x86_64.a #-lportaudio #/home/kjetil/mxe/usr/i686-w64-mingw32.static/lib/libportaudio.a
 #`$PKG --libs portaudio-2.0`
 
 make -j8 CC="$CC $EXTRAFLAGS" CXX="$CXX $EXTRAFLAGS" LINK="EXTRALDFLAGS=\"$EXTRALDFLAGS\" ../mingw/linker$1.sh $CXX" LINKER="EXTRALDFLAGS=\"$EXTRALDFLAGS\" ../mingw/linker$1.sh $CXX"

@@ -443,6 +443,11 @@
                </property>
                <item>
                 <property name="text">
+                 <string>(default)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
                  <string>22050</string>
                 </property>
                </item>
@@ -529,6 +534,11 @@
                </property>
                <item>
                 <property name="text">
+                 <string>(default)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
                  <string>16</string>
                 </property>
                </item>
@@ -597,7 +607,7 @@
               </widget>
              </item>
              <item row="3" column="4">
-              <widget class="QSpinBox" name="PeriodsSpinBox">
+              <widget class="qjackctlPeriodsSpinBox" name="PeriodsSpinBox">
                <property name="font">
                 <font>
                  <weight>50</weight>
@@ -608,10 +618,13 @@
                 <string>Number of periods in the hardware buffer</string>
                </property>
                <property name="minimum">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="maximum">
                 <number>999</number>
+               </property>
+               <property name="value">
+                <number>1</number>
                </property>
               </widget>
              </item>
@@ -4025,6 +4038,11 @@
    <class>qjackctlInterfaceComboBox</class>
    <extends>QComboBox</extends>
    <header>qjackctlInterfaceComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qjackctlPeriodsSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>qjackctlPeriodsSpinBox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

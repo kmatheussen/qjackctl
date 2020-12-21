@@ -691,9 +691,9 @@ void qjackctlSetupForm::changePreset ( const QString& sPreset )
 		m_ui.IgnoreHWCheckBox->setChecked(preset.bIgnoreHW);
 		m_ui.PrioritySpinBox->setValue(preset.iPriority);
 		setComboBoxCurrentText(m_ui.FramesComboBox,
-			QString::number(preset.iFrames));
+                                       preset.iFrames > 0 ? QString::number(preset.iFrames) : "(default)");
 		setComboBoxCurrentText(m_ui.SampleRateComboBox,
-			QString::number(preset.iSampleRate));
+                                       preset.iSampleRate > 0 ? QString::number(preset.iSampleRate) : "(default)");
 		m_ui.PeriodsSpinBox->setValue(preset.iPeriods);
 		setComboBoxCurrentText(m_ui.WordLengthComboBox,
 			QString::number(preset.iWordLength));

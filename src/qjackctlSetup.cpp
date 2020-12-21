@@ -389,9 +389,9 @@ bool qjackctlSetup::loadPreset ( qjackctlPreset& preset, const QString& sPreset 
 	preset.bHWMeter     = m_settings.value("/HWMeter", false).toBool();
 	preset.bIgnoreHW    = m_settings.value("/IgnoreHW", false).toBool();
 	preset.iPriority    = m_settings.value("/Priority", 0).toInt();
-	preset.iFrames      = m_settings.value("/Frames", 1024).toInt();
-	preset.iSampleRate  = m_settings.value("/SampleRate", 48000).toInt();
-	preset.iPeriods     = m_settings.value("/Periods", 2).toInt();
+	preset.iFrames      = m_settings.value("/Frames", 0).toInt();
+	preset.iSampleRate  = m_settings.value("/SampleRate", 0).toInt();
+	preset.iPeriods     = m_settings.value("/Periods", 0).toInt();
 	preset.iWordLength  = m_settings.value("/WordLength", 16).toInt();
 	preset.iWait        = m_settings.value("/Wait", 21333).toInt();
 	preset.iChan        = m_settings.value("/Chan", 0).toInt();

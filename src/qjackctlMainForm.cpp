@@ -1233,7 +1233,7 @@ void qjackctlMainForm::startJack (void)
 	if (m_preset.iFrames > 0 && !bNet)
 		args.append("-p" + QString::number(m_preset.iFrames));
 	if (bAlsa || bSun || bOss || bFreebob || bFirewire) {
-		if (m_preset.iPeriods > 0)
+		if (m_preset.iPeriods > 1)
 			args.append("-n" + QString::number(m_preset.iPeriods));
 	}
 	if (bAlsa) {
@@ -3908,7 +3908,7 @@ void qjackctlMainForm::setDBusParameters (void)
 	if (bAlsa || bSun || bOss || bFreebob || bFirewire) {
 		setDBusDriverParameter("nperiods",
 			(unsigned int) m_preset.iPeriods,
-			m_preset.iPeriods > 0);
+			m_preset.iPeriods > 1);
 	}
 	if (bAlsa) {
 		setDBusDriverParameter("softmode", m_preset.bSoftMode);

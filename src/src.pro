@@ -15,6 +15,7 @@ HEADERS += config.h \
 	qjackctlConnect.h \
 	qjackctlConnectAlias.h \
 	qjackctlInterfaceComboBox.h \
+	qjackctlPeriodsSpinBox.h \
 	qjackctlJackConnect.h \
 	qjackctlPatchbay.h \
 	qjackctlPatchbayFile.h \
@@ -38,6 +39,7 @@ SOURCES += \
 	qjackctlConnect.cpp \
 	qjackctlConnectAlias.cpp \
 	qjackctlInterfaceComboBox.cpp \
+	qjackctlPeriodsSpinBox.cpp \
 	qjackctlJackConnect.cpp \
 	qjackctlPatchbay.cpp \
 	qjackctlPatchbayFile.cpp \
